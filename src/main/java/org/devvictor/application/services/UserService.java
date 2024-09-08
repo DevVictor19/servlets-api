@@ -1,5 +1,6 @@
 package org.devvictor.application.services;
 
+import org.devvictor.application.exceptions.BadRequestException;
 import org.devvictor.application.exceptions.NotFoundException;
 import org.devvictor.domain.daos.UserDAO;
 import org.devvictor.domain.dtos.CreateUserRequestDTO;
@@ -8,7 +9,6 @@ import org.devvictor.domain.dtos.UpdateUserRequestDTO;
 import org.devvictor.domain.entities.User;
 
 import java.util.List;
-import java.util.Optional;
 
 public class UserService {
     private final UserDAO userDAO;
@@ -17,17 +17,19 @@ public class UserService {
         this.userDAO = userDAO;
     }
 
-    private User findById(long id) {
-        Optional<User> result = userDAO.findById(id);
+    public void create(CreateUserRequestDTO dto) {
+        var userWithSameEmail = userDAO.findByEmail(dto.email());
 
-        if (result.isEmpty()) {
-            throw new NotFoundException("User not found");
+        if (userWithSameEmail.isPresent()) {
+            throw new BadRequestException("Email already in use");
         }
 
-        return result.get();
-    }
+        var userWithSameUsername = userDAO.findByUsername(dto.username());
 
-    public void create(CreateUserRequestDTO dto) {
+        if (userWithSameUsername.isPresent()) {
+            throw new BadRequestException("Username already in use");
+        }
+
         var entity = new User();
         entity.setEmail(dto.email());
         entity.setUsername(dto.username());
@@ -36,8 +38,8 @@ public class UserService {
         userDAO.save(entity);
     }
 
-    public List<FindUserResponseDTO> find() {
-        return userDAO.find()
+    public List<FindUserResponseDTO> find(int page, int itemsPerPage) {
+        return userDAO.find(page, itemsPerPage)
                 .stream()
                 .map(e -> new FindUserResponseDTO(
                         e.getId(),
@@ -46,18 +48,10 @@ public class UserService {
                 .toList();
     }
 
-    public User findByEmail(String email) {
-        Optional<User> result = userDAO.findByEmail(email);
-
-        if (result.isEmpty()) {
-            throw new NotFoundException("User not found");
-        }
-
-        return result.get();
-    }
-
     public void update(long id, UpdateUserRequestDTO dto) {
-        User user = findById(id);
+        User user = userDAO.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
         user.setUsername(dto.username());
         user.setEmail(dto.email());
         user.setPassword(dto.password());
@@ -66,7 +60,8 @@ public class UserService {
     }
 
     public void delete(long id) {
-        User user = findById(id);
+        User user = userDAO.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         userDAO.delete(user);
     }

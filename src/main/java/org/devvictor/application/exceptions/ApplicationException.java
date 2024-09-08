@@ -1,7 +1,7 @@
 package org.devvictor.application.exceptions;
 
-abstract class ApplicationException extends RuntimeException {
-    private final Integer status;
+public class ApplicationException extends RuntimeException {
+    private final int status;
     private final String message;
 
     public ApplicationException(Integer status, String message) {
@@ -10,7 +10,7 @@ abstract class ApplicationException extends RuntimeException {
         this.message = message;
     }
 
-    public Integer getStatus() {
+    public int getStatus() {
         return status;
     }
 

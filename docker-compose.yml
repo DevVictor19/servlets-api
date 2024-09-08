@@ -10,6 +10,7 @@ services:
   nginx:
     image: nginx:latest
     container_name: servlet-crud-nginx-reverse-proxy
+    restart: always
     ports:
       - 80:80
       - 443:443
